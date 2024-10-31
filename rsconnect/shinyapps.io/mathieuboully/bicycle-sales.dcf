@@ -1,0 +1,12 @@
+name: bicycle-sales
+title: bicycle-sales
+username: mathieuboully
+account: mathieuboully
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 13184866
+bundleId: 9292854
+url: https://mathieuboully.shinyapps.io/bicycle-sales/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

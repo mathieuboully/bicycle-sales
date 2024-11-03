@@ -5,8 +5,9 @@ account: mathieuboully
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13184866
-bundleId: 9292854
+bundleId: 9306287
 url: https://mathieuboully.shinyapps.io/bicycle-sales/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: data/Customer Address.xlsx|data/Customer Demography.xlsx|README.md|utils/build_customer.R|utils/build_other_shop.R|utils/build_shop.R|utils/openrouteservice_api.R|utils/web_scraping.R

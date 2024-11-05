@@ -1,6 +1,9 @@
 library(httr)
+library(httr2)
 library(openrouteservice)
+library(jsonlite)
 
+# https://openrouteservice.org/dev/#/api-docs/v2/directions/%7Bprofile%7D/get
 # https://bookdown.org/nicohahn/making_maps_with_r5/docs/leaflet.html
 # https://giscience.github.io/openrouteservice-r/articles/openrouteservice.html
 
@@ -17,7 +20,7 @@ get_geocode_search = function(q, limit) {
     httr::GET(url, query = params)
   
   if (response$status_code == 200) {
-    message("api.openrouteservice.org status 200")
+    message("get_geocode_search status 200")
     if (limit == 1) {
       res = list()
       res$coords$lat = content(response)$features[[1]]$geometry$coordinates[[2]]
@@ -35,7 +38,7 @@ get_geocode_search = function(q, limit) {
       }
     }
   }  else {
-    warning("api.openrouteservice.org status different 200")
+    warning("get_geocode_search status different 200")
     return(NA)
   }
 }
@@ -58,12 +61,11 @@ get_geocode_search_structured = function(limit,
   
   url =
     "https://api.openrouteservice.org/geocode/search/structured"
-  # https://bookdown.org/nicohahn/making_maps_with_r5/docs/leaflet.html
   response =
     httr::GET(url, query = params)
   
   if (response$status_code == 200) {
-    message("api.openrouteservice.org status 200")
+    message("get_geocode_search_structured status 200")
     if (limit == 1) {
       res = list()
       res$coords$lat = content(response)$features[[1]]$geometry$coordinates[[2]]
@@ -82,22 +84,50 @@ get_geocode_search_structured = function(limit,
       }
     }
   }  else {
-    warning("api.openrouteservice.org status different 200")
+    warning("get_geocode_search_structured status different 200")
     return(NA)
   }
 }
 
 get_pois = function(lat, lon, poi_type, buffer = 200) {
   geometry <- list(geojson = list(type = "Point", coordinates = c(lon, lat)),
-                   buffer = 2000)
+                   buffer = buffer)
+  message("get_pois")
+  # jsonlite::fromJSON(res)$features
+  res = tryCatch(
+    openrouteservice::ors_pois(
+      api_key = api_key,
+      request = 'pois',
+      geometry = geometry,
+      limit = 2000,
+      sortby = "distance",
+      filters = list(category_ids = poi_type),
+      output = "sf"
+    ),
+    error = function(e) {
+      return(data.frame())
+    }
+  )
   
-  res = ors_pois(
+  if (nrow(res) == 0) {
+    return(data.frame())
+  } else {
+    res
+  }
+}
+
+get_isochrones = function(lat_l,
+                          lon_l,
+                          mode = "car",
+                          range = 1800,
+                          interval = 600) {
+  message("get_isochrones")
+  res = openrouteservice::ors_isochrones(
+    locations = Map(c, lon_l, lat_l),
     api_key = api_key,
-    request = 'pois',
-    geometry = geometry,
-    limit = 2000,
-    sortby = "distance",
-    filters = list(category_ids = 429),
+    profile = ors_profile(mode = c(mode)),
+    range = 1800,
+    interval = 600,
     output = "sf"
   )
   

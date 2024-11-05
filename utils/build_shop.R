@@ -4,7 +4,7 @@ source(file.path("./utils/web_scraping.R"), encoding = "UTF-8")
 
 path_data = "./data"
 
-build_shop = function() {
+build_shop = function(other_shop_buffer = 100, mode_iso = "car", range_iso =1800, interval_iso = 600) {
   shop = data.frame(
     shop_url = as.character(),
     shop_name = as.character(),
@@ -27,7 +27,7 @@ build_shop = function() {
                        xpath = "//a[contains(text(), 'all store')]",
                        attr = "href")
   
-  for (city_url in city_urls[1]) {
+  for (city_url in city_urls[1:2]) {
     message(city_url)
     page = rvest::read_html(paste0("https://www.99bikes.com.au/", city_url))
     
@@ -69,13 +69,15 @@ build_shop = function() {
       lat = res$coords$lat
       lon = res$coords$lon
       
-      other_shop = rbind(other_shop,
-                         get_pois(
-                           lat = lat,
-                           lon = lon,
-                           poi_type = 429,
-                           buffer = 200
-                         )) %>%
+      other_shop = rbind(
+        other_shop,
+        get_pois(
+          lat = lat,
+          lon = lon,
+          poi_type = 429,
+          buffer = other_shop_buffer
+        )
+      ) %>%
         data.frame(.)
       
       shop = rbind(
@@ -98,11 +100,23 @@ build_shop = function() {
     }
   }
   
-  # other_shop = other_shop %>%
-  #   distinct(osm_id, .keep_all = TRUE)
-  shops = list(shop = shop, other_shop = other_shop)
+  isochrones = get_isochrones(
+    lat_l = shop$lat[1:5],
+    lon_l = shop$lon[1:5],
+    mode = mode_iso,
+    range = range_iso,
+    interval = interval_iso
+  ) %>%
+    dplyr::mutate(mode = mode_iso)
+  
+  shops = list(
+    shop = shop,
+    other_shop = other_shop,
+    isochrones = isochrones,
+    other_shop_buffer = other_shop_buffer
+  )
   save(shops, file = "./data/shops.rds")
   return(shops)
 }
 
-build_shop()
+build_shop(other_shop_buffer = 500, mode_iso = "car", range_iso = 1800, interval_iso = 600)

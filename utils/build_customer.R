@@ -3,7 +3,7 @@ source(file.path("./utils/openrouteservice_api.R"), encoding = "UTF-8")
 
 path_data = "./data"
 
-build_customer = function() {
+build_customer = function(n_customer) {
   customer_address = readxl::read_xlsx(file.path(path_data, "Customer Address.xlsx"))
   customer_demography = readxl::read_xlsx(file.path(path_data, "Customer Demography.xlsx"))
   
@@ -20,11 +20,12 @@ build_customer = function() {
         state %in% c("Victoria", "VIC") ~ "Victoria",
         state %in% c("QLD") ~ "Queensland",
         TRUE ~ NA
-      )
+      ),
+      job_industry_category = ifelse(job_industry_category == "n/a", NA, job_industry_category)
     ) %>%
     data.frame(.)
-  
-  customer = customer[1:10, ] %>%
+
+  customer = customer[c(sample(1:nrow(customer), n_customer)), ] %>%
     rowwise() %>%
     dplyr::mutate(geocode = get_geocode_search_structured(limit = 1, address = address, postalcode = as.character(postcode), region = state, country = country)) %>%
     tidyr::unnest_wider(geocode) %>%
@@ -33,4 +34,5 @@ build_customer = function() {
   save(customer, file = "./data/customer.rds")
   return(customer)
 }
-build_customer()
+
+build_customer(n_customer = 500)
